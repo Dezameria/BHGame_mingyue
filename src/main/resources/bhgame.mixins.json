@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_17",
+  "package": "net.deizyn.bhgame.mixin",
+  "refmap": "bhgame.refmap.json",
+  "plugin": "net.deizyn.bhgame.mixin.BhGameMixinPlugin",
+  "mixins": [
+    "epicfight.ActionAnimationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}
