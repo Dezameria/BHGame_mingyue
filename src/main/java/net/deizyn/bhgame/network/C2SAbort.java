@@ -21,7 +21,7 @@ public record C2SAbort() {
         BhGameNetwork.countReceived();
         ServerPlayer player = context.get().getSender();
         if (player != null) {
-            SessionManager.leave(player.getUUID(), false);
+            SessionManager.abortKey(player);
         }
     }
 }

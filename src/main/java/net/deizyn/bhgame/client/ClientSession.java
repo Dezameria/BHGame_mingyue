@@ -35,6 +35,9 @@ public final class ClientSession {
     private static final float PARTNER_CUE_BRIGHTNESS = 0.35F;
     private static final float IDLE_GLOW = 0.12F;
     private static final int GAUGES = 4;
+    /** A sync that disagrees with the predicted needle by less than this blends in over {@link #BLEND_TICKS}. */
+    private static final float SNAP = 0.12F;
+    private static final int BLEND_TICKS = 5;
 
     public final BlockPos pos;
     public final String gameId;
@@ -48,6 +51,9 @@ public final class ClientSession {
     public int players;
     /** Camera target above the block's base. */
     public float lookHeight = 0.35F;
+    /** FREE_LOOK (D66): how far the mouse turned the camera away from the body, in degrees. */
+    float lookYawOffset;
+    float lookPitchOffset;
     public CueChannel channel = CueChannel.BLOCK;
     private boolean waiting;
     private long focusEndTick;
@@ -63,6 +69,11 @@ public final class ClientSession {
     private final long[] gaugeSetAt = new long[GAUGES];
     private final int[] gaugeFlags = new int[GAUGES];
     private final boolean[] gaugeKnown = new boolean[GAUGES];
+    // balance gauges move for our own held keys at once (D57); a sync that disagrees a little fades in
+    private final float[] gaugeKeyRate = new float[GAUGES];
+    private final float[] gaugeCorrection = new float[GAUGES];
+    private final long[] gaugeCorrectedAt = new long[GAUGES];
+    private int heldKeys;
 
     // the SEQUENCE being played, predicted locally with the server's rules (SequenceTrack); the server decides
     @Nullable
@@ -182,20 +193,79 @@ public final class ClientSession {
         }
     }
 
-    void setGauge(int index, int flags, float value, float ratePerTick) {
+    /**
+     * A gauge sync. {@code ratePerTick} leaves out the held keys; a gauge with a {@code keyRate} adds our own keys
+     * here, and since the sync is {@code leadTicks} old (half a ping) it is moved forward to now first (D57).
+     */
+    void setGauge(int index, int flags, float value, float ratePerTick, float keyRate, float leadTicks) {
         if (index < 0 || index >= GAUGES) {
             return;
         }
-        gaugeValue[index] = value;
+        boolean predicted = keyRate > 0.0F && (flags & Gauge.FLAG_BALANCE) != 0;
+        float shown = gaugeKnown[index] ? gauge(index, clock) : value;
         gaugeRate[index] = ratePerTick;
+        gaugeKeyRate[index] = predicted ? keyRate : 0.0F;
+        gaugeValue[index] = predicted ? clamp(value + (ratePerTick + keyPart(index)) * leadTicks) : value;
         gaugeSetAt[index] = clock;
         gaugeFlags[index] = flags;
+        float error = shown - gaugeValue[index];
+        // small differences glide over; jolts, spills and the first sync jump straight there
+        gaugeCorrection[index] = predicted && gaugeKnown[index] && Math.abs(error) < SNAP ? error : 0.0F;
+        gaugeCorrectedAt[index] = clock;
         gaugeKnown[index] = true;
     }
 
     public float gauge(int index, double time) {
-        float value = gaugeValue[index] + gaugeRate[index] * (float) (time - gaugeSetAt[index]);
+        float value = raw(index, time);
+        float fade = 1.0F - (float) (time - gaugeCorrectedAt[index]) / BLEND_TICKS;
+        if (fade > 0.0F) {
+            value += gaugeCorrection[index] * fade;
+        }
+        return clamp(value);
+    }
+
+    /** Where a gauge is from its last sync and our own keys, without the blend. */
+    private float raw(int index, double time) {
+        return clamp(gaugeValue[index] + (gaugeRate[index] + keyPart(index)) * (float) (time - gaugeSetAt[index]));
+    }
+
+    /** Whether we hold {@code key} right now (hold keys only), without waiting for the server. */
+    public boolean holdsLocally(InputKey key) {
+        return (heldKeys & key.bit()) != 0;
+    }
+
+    /** Our held keys' push on a balance gauge: LMB toward 0, RMB toward 1. */
+    private float keyPart(int index) {
+        float rate = gaugeKeyRate[index];
+        if (rate == 0.0F) {
+            return 0.0F;
+        }
+        return ((heldKeys & InputKey.RMB.bit()) != 0 ? rate : 0.0F) - ((heldKeys & InputKey.LMB.bit()) != 0 ? rate : 0.0F);
+    }
+
+    /** A hold key of ours went down or up: predicted gauges change speed from this tick on. */
+    void onLocalHold(InputKey key, boolean down) {
+        for (int i = 0; i < GAUGES; i++) {
+            if (gaugeKeyRate[i] != 0.0F) {
+                gaugeValue[i] = raw(i, clock);
+                gaugeSetAt[i] = clock;
+            }
+        }
+        heldKeys = down ? heldKeys | key.bit() : heldKeys & ~key.bit();
+    }
+
+    private static float clamp(float value) {
         return value < 0.0F ? 0.0F : Math.min(value, 1.0F);
+    }
+
+    /** Index of the first gauge carrying {@code flag} that has been synced, or -1. */
+    public int gaugeWithFlag(int flag) {
+        for (int i = 0; i < GAUGES; i++) {
+            if (gaugeKnown[i] && (gaugeFlags[i] & flag) != 0) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
@@ -218,6 +288,11 @@ public final class ClientSession {
 
     public boolean isWaiting() {
         return waiting;
+    }
+
+    /** Every cue this client still remembers (drawn by game-specific renderers, e.g. the yoke's tilt). */
+    public List<LocalCue> cues() {
+        return cues;
     }
 
     public boolean isOwn(LocalCue cue) {
@@ -284,13 +359,20 @@ public final class ClientSession {
             }
             CueVisual visual = cue.data().visual();
             long start = visual == CueVisual.SPARK || visual == CueVisual.SPARK_FAKE
-                    ? cue.open - Tuning.CUE_RAMP_TICKS : cue.open;
+                    ? cue.open - Tuning.CUE_RAMP_TICKS
+                    // the orb hums as it starts to gather (as soon as the cue arrives), not when it bursts
+                    : visual == CueVisual.QI_BURST || visual == CueVisual.QI_FEINT ? arrival(cue) : cue.open;
             if (clock >= start && clock < cue.close) {
                 lastSoundCueId = cue.data().id();
                 return cue;
             }
         }
         return null;
+    }
+
+    /** The local tick this cue arrived on (its window opened {@code opensIn} ticks later). */
+    public static long arrival(LocalCue cue) {
+        return cue.open - cue.data().opensIn();
     }
 
     void showBanner(Component text) {

@@ -2,7 +2,9 @@ package net.deizyn.bhgame.core.input;
 
 /** The only inputs a minigame may use (docs/design/core-mechanics.md section 2). */
 public enum InputKey {
-    LMB, RMB, SPACE, UP, LEFT, DOWN, RIGHT;
+    LMB, RMB, SPACE, UP, LEFT, DOWN, RIGHT,
+    /** The sneak keybind, held (qi_station: draw the orb back, D76, and Shift + RMB = feint, D59). */
+    SNEAK;
 
     private static final InputKey[] VALUES = values();
 

@@ -20,6 +20,10 @@ public final class Participant {
     private long rateWindowStart;
     private int rateCount;
     private long lastActionTick = Long.MIN_VALUE;
+    /** Was in Epic Fight's vanilla mode before a game that forces battle mode (D66); put back at the end. */
+    boolean restoreVanillaMode;
+    /** Was in Epic Fight's battle mode before a game with vanilla poses forced vanilla mode (D78); put back at the end. */
+    boolean restoreEpicFightMode;
 
     Participant(UUID id, int role, InputProfile profile, boolean simulated) {
         this.id = id;
@@ -61,6 +65,11 @@ public final class Participant {
     /** Whether a hold key of this participant is down right now (tracked from PRESS/RELEASE edges). */
     public boolean holds(InputKey key) {
         return (heldKeys & key.bit()) != 0;
+    }
+
+    /** Every hold key down right now, as {@link InputKey#bit()}s. */
+    int heldKeys() {
+        return heldKeys;
     }
 
     void setHeld(InputKey key, boolean down) {

@@ -11,10 +11,10 @@
 - [ ] เพิ่มแถวในตาราง [`design/minigames/README.md`](design/minigames/README.md) และงานใน [`roadmap.md`](roadmap.md)
 
 ## 2. โค้ดฝั่ง server
-- [ ] สร้าง `game/<game_id>/<Name>Block.java` extends `HerbBlock` หรือ `StationBlock` กำหนด shape, บทลงโทษเล็ก, ใหญ่ และตอนทุบตรงๆ (ใช้ `burst`/`strikeVisual` ห้ามใช้ระเบิดหรือฟ้าผ่าจริง)
+- [ ] สร้าง `game/<หมวด>/<game_id>/<Name>Block.java` (หมวด: `herb` / `station` / `carry`, D63) extends `HerbBlock`, `StationBlock` หรือ `CarryBlock` กำหนด shape, บทลงโทษเล็ก, ใหญ่ และตอนทุบตรงๆ (ใช้ `burst`/`strikeVisual` ห้ามใช้ระเบิดหรือฟ้าผ่าจริง)
 - [ ] ถ้าเป้าอยู่ในโลก: สร้าง `TargetScanner` ของเกม
-- [ ] เกมหลายคน: override `requiredPlayers()` และ `inputProfile(role)` แล้วใช้ role mask ใน cue (ดู `game/twin_grass/`)
-- [ ] สร้าง `game/<game_id>/<Name>Pattern.java` ลองประกอบจาก `pattern/common/` ก่อน (เกมแบบจังหวะใช้ `BeatTrack` ซึ่งตัดสินผลให้แล้ว) เขียนเองเฉพาะส่วนที่ไม่มี pattern ใช้ได้แค่ `PatternContext` ห้ามแตะ `ServerPlayer` หรือ `Level`
+- [ ] เกมหลายคน: override `requiredPlayers()` และ `inputProfile(role)` แล้วใช้ role mask ใน cue (ดู `game/herb/twin_grass/`)
+- [ ] สร้าง `game/<หมวด>/<game_id>/<Name>Pattern.java` ลองประกอบจาก `pattern/common/` ก่อน (เกมแบบจังหวะใช้ `BeatTrack` ซึ่งตัดสินผลให้แล้ว) เขียนเองเฉพาะส่วนที่ไม่มี pattern ใช้ได้แค่ `PatternContext` ห้ามแตะ `ServerPlayer` หรือ `Level`
 - [ ] ลงทะเบียนใน `registry/Minigames.java` หนึ่งบรรทัด: `register("<game_id>", () -> new <Name>Block(HerbBlock.herbProperties()))`
 - [ ] ถ้า pattern มีกฎใหม่ที่ `BeatTrack` ไม่ครอบคลุม เขียน JUnit test แบบ `src/test/.../BeatTrackTest.java` (ใช้ `PatternContext` ปลอม ไม่ต้องเปิดเกม) แล้วรัน `./gradlew.bat test`
 - [ ] ตรวจกฎใน [`multiplayer-performance.md`](multiplayer-performance.md): ไม่ส่ง packet ทุก tick, ส่ง cue ล่วงหน้า, ไม่สร้าง object ใน `Pattern.tick`, ไม่เปลี่ยน blockstate ระหว่างเล่น
@@ -26,7 +26,7 @@
 - [ ] ถ้าต้องใช้ท่าทางผู้เล่นแบบใหม่: เพิ่มใน `PlayerPose` + `player_animation/<pose>.json`
 
 ## 4. Resources
-- [ ] `lang/en_us.json` และ `lang/th_th.json`: ชื่อบล็อก, ข้อความผลลัพธ์ใน action bar (ใช้ถ้อยคำในเรื่อง)
+- [ ] `lang/en_us.json` และ `lang/th_th.json`: ชื่อบล็อก, ข้อความผลลัพธ์ใน action bar (ใช้ถ้อยคำในเรื่อง) ข้อความที่เป็นคำอธิบายใส่ไทยเดียวกันทั้งสองไฟล์ ชื่อบล็อกใน `en_us` เป็นอังกฤษ (D69)
 - [ ] `blockstates/<game_id>.json`, `models/block/`, `models/item/`, `textures/block/<game_id>*.png`
 - [ ] `loot_tables/blocks/<game_id>.json` ที่ว่าง (ทุบแล้วไม่ drop)
 - [ ] `sounds/<game_id>/` + เพิ่มใน `sounds.json` และ `ModSounds`

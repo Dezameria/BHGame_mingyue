@@ -1,6 +1,8 @@
 package net.deizyn.bhgame.client;
 
 import net.deizyn.bhgame.client.pose.ClientPoses;
+import net.deizyn.bhgame.client.render.carry.water_yoke.YokeVisuals;
+import net.deizyn.bhgame.client.render.station.qi_station.QiEffects;
 import net.deizyn.bhgame.core.cue.CueChannel;
 import net.deizyn.bhgame.core.input.InputKey;
 import net.deizyn.bhgame.core.pose.PlayerAction;
@@ -26,10 +28,18 @@ final class InputCapture {
         if (!press && !hold) {
             return;
         }
+        if (hold) {
+            session.onLocalHold(key, press);
+        }
         if (press) {
             // instant local feedback; the HIT/MISS result arrives from the server about one ping later
+            if (key == InputKey.RMB && session.gameId.equals("qi_station")) {
+                QiEffects.onLocalSend(session.holdsLocally(InputKey.SNEAK));
+            }
             if (session.channel == CueChannel.WORLD_ARROW) {
                 localPunch(session, key);
+            } else if (session.profile.freeMovement()) {
+                YokeVisuals.onLocalPress(session, key);
             } else if (!hold) {
                 ClientPacketHandler.playLocal(session.pos, SoundEvents.GRASS_HIT, 0.5F, 1.2F);
             }

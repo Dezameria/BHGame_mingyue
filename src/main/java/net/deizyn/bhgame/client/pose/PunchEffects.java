@@ -2,6 +2,7 @@ package net.deizyn.bhgame.client.pose;
 
 import net.deizyn.bhgame.core.input.InputKey;
 import net.deizyn.bhgame.core.pose.PlayerAction;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The hit a punch leaves in the air in front of the player (D42): sparks and a thud where the fist lands, on the side
  * the arrow points to (W high, S low, A to the player's left, D to the right); the finisher is a bigger burst.
- * Client-side particles and sounds only, so they cost no packets beyond the action itself.
+ * Client-side particles cost no packets beyond the action itself. The sound plays here only for our own punch, the
+ * moment the key goes down; everyone else hears the server's copy (D66).
  */
 final class PunchEffects {
     /** From the eyes to the dummy's surface when standing at the snapped distance. */
@@ -47,6 +49,11 @@ final class PunchEffects {
         }
         if (finisher) {
             level.addParticle(ParticleTypes.SWEEP_ATTACK, at.x, at.y, at.z, 0.0, 0.0, 0.0);
+        }
+        if (player != Minecraft.getInstance().player) {
+            return;
+        }
+        if (finisher) {
             level.playLocalSound(at.x, at.y, at.z, SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 0.8F, 0.9F,
                     false);
         } else {

@@ -1,6 +1,8 @@
 package net.deizyn.bhgame.network;
 
 import net.deizyn.bhgame.BhGame;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
@@ -12,7 +14,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
  * the player. Packet budget rules: docs/multiplayer-performance.md section 2.
  */
 public final class BhGameNetwork {
-    private static final String VERSION = "6";
+    private static final String VERSION = "11";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(BhGame.id("main"),
             () -> VERSION, VERSION::equals, VERSION::equals);
 
@@ -58,6 +60,18 @@ public final class BhGameNetwork {
         CHANNEL.messageBuilder(S2CPlayerAction.class, id++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(S2CPlayerAction::encode).decoder(S2CPlayerAction::decode)
                 .consumerMainThread(S2CPlayerAction::handle).add();
+        CHANNEL.messageBuilder(S2CNearbyState.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(S2CNearbyState::encode).decoder(S2CNearbyState::decode)
+                .consumerMainThread(S2CNearbyState::handle).add();
+        CHANNEL.messageBuilder(C2SCarryPlace.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(C2SCarryPlace::encode).decoder(C2SCarryPlace::decode)
+                .consumerMainThread(C2SCarryPlace::handle).add();
+        CHANNEL.messageBuilder(S2COpenSparring.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(S2COpenSparring::encode).decoder(S2COpenSparring::decode)
+                .consumerMainThread(S2COpenSparring::handle).add();
+        CHANNEL.messageBuilder(C2SSparringApply.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(C2SSparringApply::encode).decoder(C2SSparringApply::decode)
+                .consumerMainThread(C2SSparringApply::handle).add();
     }
 
     public static void sendTo(ServerPlayer player, Object message) {
@@ -71,6 +85,13 @@ public final class BhGameNetwork {
         sentTotal++;
         sentThisSecond++;
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> player), message);
+    }
+
+    /** To every client that has the chunk of {@code pos} loaded (players near a block, D60). */
+    public static void sendNearBlock(ServerLevel level, BlockPos pos, Object message) {
+        sentTotal++;
+        sentThisSecond++;
+        CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(pos)), message);
     }
 
     /** To every client tracking {@code player}, including the player (for third-person view). */

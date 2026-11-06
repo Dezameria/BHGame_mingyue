@@ -1,0 +1,273 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "facing": "north"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_left": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_1"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_left": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_2"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_left": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_3"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_right": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_1"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_right": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_2"
+      }
+    },
+    {
+      "when": {
+        "facing": "north",
+        "water_right": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_3"
+      }
+    },
+    {
+      "when": {
+        "facing": "east"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_left": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_left": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_left": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_right": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_1",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_right": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_2",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "east",
+        "water_right": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_3",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "facing": "south"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_left": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_left": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_left": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_right": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_1",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_right": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_2",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "south",
+        "water_right": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_3",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "facing": "west"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_left": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_left": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_left": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_left_3",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_right": "1"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_1",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_right": "2"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_2",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "facing": "west",
+        "water_right": "3"
+      },
+      "apply": {
+        "model": "bhgame:block/water_yoke_right_3",
+        "y": 270
+      }
+    }
+  ]
+}

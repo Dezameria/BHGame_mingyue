@@ -17,6 +17,7 @@
   "bhgame.wooden_dummy.outcome.reached": "แขนหุ่นฟาดเข้าให้ ไปได้ถึงด่าน %s",
 
   "bhgame.session.busy": "มีคนกำลังฝึกอยู่ตรงนี้",
+  "bhgame.session.no_room_opposite": "ฝั่งตรงข้ามคู่ประชันไม่มีที่ให้ยืน",
   "bhgame.session.too_far": "ต้องเข้าไปให้ถึงตัวก่อน",
   "bhgame.session.server_busy": "ตอนนี้มีคนฝึกอยู่มากเกินไป รอสักครู่แล้วลองใหม่",
   "bhgame.session.partner_left": "คู่ฝึกปล่อยมือ รากขาดกลางมือทั้งสองคน",
@@ -40,7 +41,28 @@
   "bhgame.hud.key.left": "A",
   "bhgame.hud.key.down": "S",
   "bhgame.hud.key.right": "D",
+  "bhgame.hud.key.sneak": "Shift",
 
   "key.categories.bhgame": "BeeHouse Game",
-  "key.bhgame.abort": "หยุดฝึก"
+  "key.bhgame.abort": "หยุดฝึก",
+
+  "block.bhgame.qi_station": "แท่นประชันปราณ",
+  "bhgame.qi_station.waiting": "ลูกแก้วลอยรออยู่กลางแท่น… ต้องมีใครอีกคนมายืนประชันอีกฝั่ง",
+  "bhgame.qi_station.hint": "ค้างฝ่ามือดันลูกแก้วออกไป ค้าง Shift ดึงกลับ ดึงจนติดมือแล้วแรงดันของอีกฝ่ายจะย้อนกลับไปหาเขา คลิกขวาส่งคลื่นปราณ (Shift + คลิกขวาเพื่อหลอก) เมื่อลูกแก้วรวมพลังมาทางเจ้า ปล่อยมือแล้วกด Space สะท้อนกลับ",
+  "bhgame.qi_station.frenzy": "ลูกแก้วเริ่มคลั่ง",
+  "bhgame.qi_station.outcome.win": "ปราณของเจ้าดันลูกแก้วเข้าถึงตัวอีกฝ่าย เจ้าชนะการประชัน",
+  "bhgame.qi_station.outcome.lose": "ลูกแก้วกระแทกเข้าอก ร่างเจ้ากระเด็นถอยหลัง",
+  "block.bhgame.water_yoke": "คานหาบน้ำ",
+  "bhgame.water_yoke.hint": "ถังเต็มเสมอขอบ… ก้าวให้มั่น อย่าให้หก",
+  "bhgame.water_yoke.outcome.perfect": "วางคานลง น้ำไม่หกเลยสักหยด",
+  "bhgame.water_yoke.outcome.success": "วางคานลง น้ำหกไปบ้างระหว่างทาง",
+  "bhgame.water_yoke.outcome.fail": "วางคานลง ถังว่างเปล่าทั้งสองใบ",
+  "bhgame.water_yoke.outcome.aborted": "วางคานลง",
+  "bhgame.carry.how_to_lift": "ย่อตัว (Shift) แล้วคลิกขวาด้วยมือเปล่าเพื่อยกขึ้นบ่า",
+  "bhgame.carry.hands_full": "ต้องวางของในมือก่อน",
+  "bhgame.carry.cannot_place": "ตรงนี้วางไม่ได้",
+
+  "entity.bhgame.sparring_dummy": "หุ่นฝึก",
+  "item.bhgame.sparring_dummy_spawn_egg": "ไข่เกิดหุ่นฝึก",
+  "item.bhgame.sparring_baton": "ไม้สั่งหุ่น"
 }

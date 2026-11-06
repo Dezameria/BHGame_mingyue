@@ -6,6 +6,7 @@ import net.deizyn.bhgame.core.input.InputProfile;
 import net.deizyn.bhgame.core.outcome.Penalty;
 import net.deizyn.bhgame.core.pattern.Pattern;
 import net.deizyn.bhgame.core.pattern.PatternContext;
+import net.deizyn.bhgame.core.pose.PlayerAction;
 import net.deizyn.bhgame.core.pose.PlayerPose;
 import net.deizyn.bhgame.core.session.Outcome;
 import net.deizyn.bhgame.core.session.SessionManager;
@@ -93,6 +94,23 @@ public abstract class TrainingBlock extends BaseEntityBlock {
         return 0.0;
     }
 
+    /**
+     * A face-off (PvP, D58): with {@link #standDistance()} set, the second player is snapped to the side opposite the
+     * first instead of the nearest one.
+     */
+    public boolean facesOff() {
+        return false;
+    }
+
+    /**
+     * Whether players are put in Epic Fight's battle mode for the session (and back to vanilla mode afterwards if that
+     * is where they were), with the mode key locked meanwhile (D66). Otherwise they are put in vanilla mode and drawn
+     * by the vanilla model, and get battle mode back at the end (D78). Nothing happens without Epic Fight.
+     */
+    public boolean forcesEpicFightMode() {
+        return false;
+    }
+
     /** Where this game shows its cues; tells the client which renderer to use. */
     public CueChannel channel() {
         return CueChannel.BLOCK;
@@ -106,6 +124,13 @@ public abstract class TrainingBlock extends BaseEntityBlock {
     public abstract Penalty smallPenalty();
 
     public abstract Penalty bigPenalty();
+
+    /**
+     * The sound of a one-shot action ({@code PatternContext.action}) for everyone in earshot except {@code player},
+     * whose client played it on the key press (D66). Throttled with the action. Default: silent.
+     */
+    public void playActionSound(ServerLevel level, ServerPlayer player, PlayerAction action) {
+    }
 
     /** What bystanders see the player doing during this game. */
     public abstract PlayerPose pose();
@@ -135,6 +160,11 @@ public abstract class TrainingBlock extends BaseEntityBlock {
 
     /** A participant walked out of a multi-player game after it began (D32); they already got the big penalty. */
     public void onAbandoned(ServerLevel level, BlockPos pos, BlockState state, TrainingBlockEntity blockEntity) {
+    }
+
+    /** Whether removing the block ends a session on it (not for carried blocks, which leave the world on purpose). */
+    protected boolean abortsSessionOnRemove() {
+        return true;
     }
 
     @Override
@@ -167,7 +197,7 @@ public abstract class TrainingBlock extends BaseEntityBlock {
     @Override
     @SuppressWarnings("deprecation")
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel && abortsSessionOnRemove()) {
             SessionManager.abortAt(serverLevel, pos);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

@@ -3,6 +3,8 @@ package net.deizyn.bhgame.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.deizyn.bhgame.client.ClientSession;
+import net.deizyn.bhgame.client.NearbySessions;
+import net.deizyn.bhgame.client.render.station.qi_station.QiOrbRenderer;
 import net.deizyn.bhgame.core.block.TrainingBlockEntity;
 import net.deizyn.bhgame.core.cue.CueChannel;
 import net.deizyn.bhgame.core.cue.CueVisual;
@@ -13,11 +15,13 @@ import org.joml.Matrix4f;
 
 /**
  * Draws a session's cues at its block, only on the client of the player whose session points at this block.
- * Everyone else (and this client when idle) sees just the plain block model.
+ * Everyone else (and this client when idle) sees just the plain block model, except the qi_station orb, which
+ * everyone nearby sees (D60).
  * <ul>
  *   <li>Channel BLOCK (herbs): a glow on the soil in the colour of the brightest cue, and a root column that rises
  *       with progress.</li>
  *   <li>Channel WORLD_ARROW (wooden dummy): nothing here; the arrow row is on the HUD (D39).</li>
+ *   <li>qi_station: the orb between the duellists ({@link QiOrbRenderer}).</li>
  * </ul>
  * Placeholder looks until P6.
  */
@@ -33,11 +37,19 @@ public class TrainingBlockRenderer implements BlockEntityRenderer<TrainingBlockE
                        int packedLight, int packedOverlay) {
         ClientSession session = ClientSession.get();
         if (session == null || !session.pos.equals(blockEntity.getBlockPos())) {
+            NearbySessions.State nearby = NearbySessions.get(blockEntity.getBlockPos());
+            if (nearby != null) {
+                QiOrbRenderer.renderNearby(nearby, ClientSession.clock() + partialTick, poseStack, buffers);
+            }
             return;
         }
         double time = ClientSession.clock() + partialTick;
         if (session.channel == CueChannel.WORLD_ARROW) {
             // the dummy's arrow row is drawn on the HUD (ArrowRowHud, D39); the dummy itself stays plain
+            return;
+        }
+        if (session.gameId.equals("qi_station")) {
+            QiOrbRenderer.render(session, time, poseStack, buffers);
             return;
         }
         float glow = session.isFocusing() ? 0.12F : session.glow(time);
@@ -61,7 +73,7 @@ public class TrainingBlockRenderer implements BlockEntityRenderer<TrainingBlockE
     }
 
     /** An axis-aligned box with every face drawn from both sides (the lightning render type culls back faces). */
-    static void box(VertexConsumer c, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1,
+    public static void box(VertexConsumer c, Matrix4f m, float x0, float y0, float z0, float x1, float y1, float z1,
                     float r, float g, float b, float a) {
         quad(c, m, x0, y1, z0, x0, y1, z1, x1, y1, z1, x1, y1, z0, r, g, b, a); // top
         quad(c, m, x0, y0, z0, x1, y0, z0, x1, y0, z1, x0, y0, z1, r, g, b, a); // bottom

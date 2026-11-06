@@ -10,6 +10,7 @@ Minecraft mod (Forge 1.20.1) สำหรับมินิเกมแนวจ
 | :--- | :--- | :--- |
 | [`overview.md`](overview.md) | วิสัยทัศน์, หลักการออกแบบ, คำศัพท์ | หลักการเปลี่ยน |
 | [`design/core-mechanics.md`](design/core-mechanics.md) | กลไกกลาง: HP + Pattern, ชนิด cue, ปุ่ม, ผลลัพธ์, บทลงโทษ, การตั้งค่าของ admin | กฎกลางเปลี่ยน |
+| [`design/sparring_dummy.md`](design/sparring_dummy.md) | หุ่นฝึก: mob ที่ตีเป้าหมายด้วยท่า Epic Fight ที่ตั้งด้วยคำสั่งหรือไม้สั่งหุ่น (ไม่ใช่มินิเกม) | แก้หุ่นฝึก |
 | [`design/minigames/`](design/minigames/) | สเปกของมินิเกมแต่ละเกม เกมละไฟล์ (ใช้ [`_template.md`](design/minigames/_template.md)) | เพิ่มหรือแก้เกม |
 | [`architecture.md`](architecture.md) | โครงสร้าง package และไฟล์, class หลัก, network, lifecycle ของ session | โครงสร้างโค้ดเปลี่ยน |
 | [`multiplayer-performance.md`](multiplayer-performance.md) | กฎเรื่องหลายผู้เล่น: packet budget, ความลื่นไหลและการชดเชย ping, CPU, memory ของเซิร์ฟ, การทดสอบโหลด | กฎเรื่อง network หรือ performance เปลี่ยน |

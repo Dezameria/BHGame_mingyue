@@ -4,12 +4,17 @@ import net.deizyn.bhgame.BhGame;
 import net.deizyn.bhgame.command.BhGameCommand;
 import net.deizyn.bhgame.core.pose.PlayerPose;
 import net.deizyn.bhgame.network.BhGameNetwork;
+import net.deizyn.bhgame.network.S2CNearbyState;
 import net.deizyn.bhgame.network.S2CPlayerPose;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingFallEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -39,8 +44,37 @@ public final class SessionEvents {
         if (event.getTarget() instanceof ServerPlayer target && event.getEntity() instanceof ServerPlayer tracker) {
             PlayerPose pose = SessionManager.poseOf(target);
             if (pose != PlayerPose.NONE) {
-                BhGameNetwork.sendTo(tracker, new S2CPlayerPose(target.getId(), pose));
+                BhGameNetwork.sendTo(tracker,
+                        new S2CPlayerPose(target.getId(), pose, SessionManager.poseDataOf(target)));
             }
+            S2CNearbyState nearby = SessionManager.nearbyStateOf(target);
+            if (nearby != null) {
+                BhGameNetwork.sendTo(tracker, nearby);
+            }
+        }
+    }
+
+    // carried games (D49): the server sees jumps and falls in the movement packets
+    @SubscribeEvent
+    public static void onJump(LivingEvent.LivingJumpEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            SessionManager.onCarrierJump(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFall(LivingFallEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            SessionManager.onCarrierFall(player, event.getDistance());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onHurt(LivingHurtEvent event) {
+        // a hard landing already spilled; its fall damage is not a second blow
+        if (event.getEntity() instanceof ServerPlayer player && event.getAmount() > 0.0F
+                && !event.getSource().is(DamageTypeTags.IS_FALL)) {
+            SessionManager.onCarrierHurt(player);
         }
     }
 
@@ -76,7 +110,7 @@ public final class SessionEvents {
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
-        SessionManager.clear();
+        SessionManager.shutdown();
     }
 
     private SessionEvents() {

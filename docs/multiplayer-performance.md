@@ -11,9 +11,10 @@
 | diegetic cue บนตัววัตถุ (แสงเรือง, ออร่า, ประกาย) | **คนเล่นคนเดียว** | ไม่มี packet แยก client ของคนเล่นวาดเองจาก `S2CCue` ที่ได้อยู่แล้ว **ห้ามใช้ blockstate หรือ block entity sync** |
 | ท่าทางของผู้เล่น | คนที่ track ผู้เล่นอยู่ + ตัวเอง (สำหรับมุมมองบุคคลที่สาม, client ไม่แกว่งแขนตัวเองในมุมมองบุคคลที่หนึ่ง) | `S2CPlayerPose` ตอนเริ่มและจบเท่านั้น (`TRACKING_ENTITY_AND_SELF`, นับเป็น 1 ข้อความ) + ส่งให้คนที่เพิ่งเริ่ม track |
 | บทลงโทษและผลลัพธ์ (`burst`, `strikeVisual`, ไฟ, บล็อกหาย, ของหล่น) | ผู้เล่นในระยะใกล้ (≤ 24 บล็อก) | เอฟเฟกต์ระยะใกล้ + ของ vanilla เฉพาะตอนเกิดเหตุการณ์ **ไม่ใช้ `Level.explode` หรือ `LightningBolt`** (คำนวณใส่ทุก entity / ถูก track ไกลมาก และทำร้ายคนยืนดู) |
+| **สถานะสาธารณะของ session** (D60, ตอนนี้มีแค่ลูกแก้ว `qi_station`): gauge ที่มี `FLAG_PUBLIC`, ปุ่มค้างของคนเล่น, เหตุการณ์ครั้งเดียวที่เกมกำหนด | ทุกคนที่โหลด chunk ของบล็อก (รวมคนเล่น) | `S2CNearbyState` ผ่าน `TRACKING_CHUNK` ห้ามมีข้อมูลที่บอกคนดูหรือคนเล่นเกินกว่าที่จอของคนเล่นบอก (คลื่นหลอกกับคลื่นจริงส่งเหตุการณ์เดียวกัน) particle ทำบน client ไม่เกิน 24 บล็อก |
 | ผู้เล่นที่ไม่ได้อยู่ใกล้ | ไม่ได้อะไรเลย | — |
 
-คนรอบข้างเห็นแค่ท่าทางกับผลลัพธ์ ไม่เห็น cue และ HUD ซึ่งทั้งช่วยเรื่อง immersion ([`design/core-mechanics.md`](design/core-mechanics.md) หัวข้อ 9) และทำให้ traffic ต่อ session ไม่เพิ่มตามจำนวนคนที่ยืนดู
+คนรอบข้างเห็นแค่ท่าทางกับผลลัพธ์ (และสถานะสาธารณะถ้าเกมประกาศไว้ D60) ไม่เห็น cue และ HUD ซึ่งทั้งช่วยเรื่อง immersion ([`design/core-mechanics.md`](design/core-mechanics.md) หัวข้อ 9) และทำให้ traffic ต่อ session ไม่เพิ่มตามจำนวนคนที่ยืนดู
 
 ## 2. Packet budget
 
@@ -27,8 +28,14 @@
 | `S2CGaugeSync` | S→C | gauge เปลี่ยน **อัตรา** (เช่น เริ่มหรือหยุดค้าง) ส่ง `value + ratePerTick` แล้ว client คำนวณต่อเอง | ตามการกด/ปล่อย + resync ทุก 20 tick ระหว่างที่ gauge ขยับ |
 | `S2CSessionEnd` | S→C | จบ | ครั้งเดียว |
 | `S2CPlayerPose` | S→C (คนรอบข้าง) | เริ่มและจบ session, มีคนเริ่ม track ผู้เล่น | ครั้งเดียวต่อคนดู |
+| `S2CNearbyState` (D60) | S→C (ทุกคนที่โหลด chunk ของบล็อก) | เฉพาะเกมที่มี gauge `FLAG_PUBLIC`: gauge นั้นเปลี่ยนอัตราหรือ resync, ปุ่มค้างของคนเล่นเปลี่ยน (**รวมกันไม่เกิน 1 ครั้งต่อ 4 tick ต่อ session**), เหตุการณ์ครั้งเดียวจาก `showNearby` (qi_station: ส่งคลื่น, ผลของคลื่น, รับลมไม่เกิน 1 ครั้งต่อ 10 tick ต่อคน; wooden_dummy: ขึ้นด่าน 1 ครั้งต่อด่าน, D66), และให้คนที่เพิ่งเริ่ม track คนเล่น | ไม่เกิน 5 ต่อวินาทีต่อ session (ค่าจริงต่ำกว่ามาก) |
+| เสียงหมัดหุ่นไม้ (D66) | S→C เสียง vanilla (`ServerLevel.playSound` ยกเว้นคนต่อย) | พร้อม `S2CPlayerAction` เท่านั้น จึงไม่เกิน 1 ครั้งต่อ 3 tick ต่อคนเล่น ส่งถึงทุกคนในระยะได้ยิน (16 บล็อก) | ไม่เกิน ~7 ต่อวินาทีต่อคนเล่น |
 | `C2SInput` | C→S | **ตอนกด** ทุกปุ่ม, **ตอนปล่อย** เฉพาะปุ่มใน `holdKeys`, และไม่ส่งการกดตอนไม่มี cue ถ้า `sendIdlePresses=false` (ดับเทียน: ส่งเฉพาะตอนเส้นเล็งโดนเปลวไฟ) | ตามการกดที่มีความหมาย |
 | `C2SAbort` | C→S | กดยกเลิก | ครั้งเดียว |
+| `S2COpenSparring` (D74, D75, D79) | S→C (คนคลิกคนเดียว) | คลิกขวาหุ่นฝึกด้วยไม้สั่งหุ่น ค่าของหุ่น, pattern, stats, item 6 ชิ้น, คำสั่ง 5 ช่อง (เฉพาะคนที่มีสิทธิ์), ชื่อ (≤ 48) | ตามการคลิก |
+| `C2SSparringApply` (D74, D75, D79) | C→S | กดบันทึกในหน้าตั้งค่า เซิร์ฟตรวจ permission, ระยะ 48 บล็อก, id ท่าทุกท่า, อ่าน item จากช่องกระเป๋าเอง, สิทธิ์ตั้งคำสั่ง; decoder ปฏิเสธเกิน 32 ท่าต่อชุด / 8 pattern / 512 ตัวอักษรต่อคำสั่ง / ชื่อ 48 (≤ ~28 KB) ชื่อส่งเฉพาะเมื่อแก้ | ตามการกด |
+| ความเร็วท่าหุ่นฝึก (D75) | entity data float | ตอนท่าถัดไปเร็วต่างจากท่าก่อน | ไม่เกิน 1 ต่อท่า |
+| ท่าของหุ่นฝึก (Epic Fight) | S→C คนที่ track หุ่น | 1 ต่อท่า (packet ของ Epic Fight เอง) | ~1 ต่อวินาทีต่อหุ่นที่กำลังสู้ ผลวัด CPU ดู design/sparring_dummy.md หัวข้อ "วัดภาระเซิร์ฟ" |
 
 - **ขนาด packet:** ใช้ `VarInt`, enum เป็น `byte` และ game id เป็น int id จาก registry (ไม่ส่ง string) packet ส่วนใหญ่ไม่เกิน 16 byte `C2SInput` แบบมี yaw/pitch เพิ่ม 8 byte
 - **ประมาณการ (หลัง optimize):** ต่อ session ~1.5–5 packet/วินาที, **70 session พร้อมกัน ≈ 100–300 packet/วินาทีทั้งเซิร์ฟ** ต่อผู้เล่นหนึ่งคนประมาณ 100–200 byte/วินาที ไม่ถึง 1% ของ traffic vanilla ต่อผู้เล่น (10–50 KB/วินาที)
@@ -146,6 +153,8 @@ server ไม่ได้ส่ง cue ตอนที่กรอบเวล�
 | `gaugeResyncTicks` | 20 | (P2b, ยังไม่มีใน config) resync gauge ทุกกี่ tick ระหว่างที่ขยับ |
 | `aimToleranceDegrees` | 15 | (P2b, ยังไม่มีใน config) มุมที่ yaw/pitch ของ AIM คลาดจากทิศที่ server รู้ได้ |
 | `enableStressCommand` | false | เปิด `/bhgame stress` (dev เท่านั้น) |
+| `sparring.batonPermissionLevel` | 2 | permission ที่ต้องมีเพื่อใช้ไม้สั่งหุ่น (D74) 0 = ทุกคนที่ถือไม้ |
+| `sparring.commandPermissionLevel` | 2 | permission ที่ต้องมีเพื่อตั้งคำสั่งของหุ่น (ไม้และ `/bhgame sparring ... command`) 2–4 คำสั่งรันที่ระดับ 2 (D79) |
 
 ไฟล์: `run/world/serverconfig/bhgame-server.toml` (sync ไป client อัตโนมัติ) ค่าที่มีจริงอยู่ใน `core/config/BhGameConfig.java`
 

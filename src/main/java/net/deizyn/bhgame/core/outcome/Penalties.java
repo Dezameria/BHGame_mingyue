@@ -23,6 +23,32 @@ public final class Penalties {
         return (player, source) -> player.hurt(player.damageSources().magic(), amount);
     }
 
+    /**
+     * A real blow: {@code amount} health off, armour ignored, through the hurt cooldown so it always lands, with the
+     * red flash and hurt sound.
+     */
+    public static Penalty blow(float amount) {
+        return (player, source) -> {
+            player.invulnerableTime = 0;
+            player.hurt(player.damageSources().magic(), amount);
+        };
+    }
+
+    /**
+     * Takes {@code points} off the food bar (2 = one drumstick), visibly: saturation never soaks it up, it is cut to
+     * the new food level. Nothing in creative.
+     */
+    public static Penalty hunger(int points) {
+        return (player, source) -> {
+            if (player.getAbilities().invulnerable) {
+                return;
+            }
+            var food = player.getFoodData();
+            food.setFoodLevel(Math.max(0, food.getFoodLevel() - points));
+            food.setSaturation(Math.min(food.getSaturationLevel(), food.getFoodLevel()));
+        };
+    }
+
     public static Penalty fire(int seconds) {
         return (player, source) -> player.setSecondsOnFire(seconds);
     }

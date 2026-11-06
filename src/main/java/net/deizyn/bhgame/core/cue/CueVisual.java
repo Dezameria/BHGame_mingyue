@@ -17,7 +17,17 @@ public enum CueVisual {
     /** The strike point of a SEQUENCE, answered with SPACE (wooden_dummy finisher). */
     FINISHER,
     /** Like ARROWS, but a wrong press ends the set instead of restarting the row (wooden_dummy, D39). */
-    ARROWS_STRICT;
+    ARROWS_STRICT,
+    /** The yoke dips on the carrier's left; answered with RMB on the other side (water_yoke, D52). */
+    TILT_LEFT,
+    /** The yoke dips on the carrier's right; answered with LMB. */
+    TILT_RIGHT,
+    /** A gust ripples the water, the yoke stays level: do not press (water_yoke FEINT). */
+    RIPPLE,
+    /** The orb gathers and bursts at you; answered with SPACE (qi_station). */
+    QI_BURST,
+    /** The orb gathers, then lets go: do not press (qi_station FEINT, the frenzied orb only). */
+    QI_FEINT;
 
     private static final CueVisual[] VALUES = values();
 

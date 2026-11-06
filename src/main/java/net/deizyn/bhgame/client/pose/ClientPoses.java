@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.deizyn.bhgame.client.ClientSession;
+import net.deizyn.bhgame.client.render.carry.water_yoke.YokeVisuals;
 import net.deizyn.bhgame.compat.epicfight.EpicFightCompat;
 import net.deizyn.bhgame.compat.epicfight.client.EpicFightClientBridge;
 import net.deizyn.bhgame.core.config.BhGameConfig;
@@ -11,6 +12,8 @@ import net.deizyn.bhgame.core.input.InputKey;
 import net.deizyn.bhgame.core.pose.PlayerAction;
 import net.deizyn.bhgame.core.pose.PlayerPose;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -32,16 +35,26 @@ public final class ClientPoses {
      */
     private static final int IDLE_AFTER_ACTION_TICKS = 10;
     private static final float CROUCH_DROP = 0.125F;
+    /** PALM_PUSH: each arm turns in this much (radians) so the palms meet at the orb. */
+    private static final float PALM_INWARD = 0.22F;
+    /** PALM_PUSH: how far (model pixels) the arms thrust forward on a burst, and their slow idle press. */
+    private static final float PALM_THRUST = 3.0F;
+    private static final float PALM_PRESS = 0.6F;
+    /** PALM_PUSH while drawing the orb back (Shift, D76): the arms come in this far and the elbows drop. */
+    private static final float PALM_DRAW = 3.5F;
+    private static final float PALM_DRAW_DROP = 0.25F;
 
     private static final class Entry {
         final PlayerPose pose;
+        int data;
         long nextSwing;
         long lastAction = Long.MIN_VALUE / 2;
         long missingSince = -1;
         boolean offHandNext;
 
-        Entry(PlayerPose pose, long now) {
+        Entry(PlayerPose pose, int data, long now) {
             this.pose = pose;
+            this.data = data;
             this.nextSwing = now + 10;
         }
     }
@@ -49,12 +62,83 @@ public final class ClientPoses {
     private static final Int2ObjectMap<Entry> POSES = new Int2ObjectOpenHashMap<>();
     private static boolean pushedForRender;
 
-    public static void set(int entityId, PlayerPose pose) {
+    public static void set(int entityId, PlayerPose pose, int data) {
+        Entry old = POSES.get(entityId);
         if (pose == PlayerPose.NONE) {
             POSES.remove(entityId);
+            YokeVisuals.forget(entityId);
+        } else if (old != null && old.pose == pose) {
+            // same pose, new data (water_yoke: a spill or refill)
+            if (pose == PlayerPose.CARRY_YOKE) {
+                YokeVisuals.onWaterChanged(entityId, old.data, data);
+            }
+            old.data = data;
         } else {
-            POSES.put(entityId, new Entry(pose, ClientSession.clock()));
+            POSES.put(entityId, new Entry(pose, data, ClientSession.clock()));
         }
+    }
+
+    /** Whether this client shows {@code player} carrying the water yoke (D51). */
+    public static boolean isCarrying(Player player) {
+        Entry entry = POSES.get(player.getId());
+        return entry != null && entry.pose == PlayerPose.CARRY_YOKE;
+    }
+
+    /**
+     * Whether this client shows {@code player} in a session drawn by the vanilla model, kept in Epic Fight's vanilla
+     * mode (every game but the wooden dummy, D78).
+     */
+    public static boolean usesVanillaModel(Player player) {
+        Entry entry = POSES.get(player.getId());
+        return entry != null && PlayerPose.usesVanillaModel(entry.pose);
+    }
+
+    /** Whether this client shows {@code player} training on the wooden dummy (Epic Fight battle mode is locked, D66). */
+    public static boolean isWingChun(Player player) {
+        Entry entry = POSES.get(player.getId());
+        return entry != null && entry.pose == PlayerPose.WING_CHUN;
+    }
+
+    /** Whether this client shows any session pose on the entity {@code entityId}. */
+    public static boolean hasPose(int entityId) {
+        return POSES.containsKey(entityId);
+    }
+
+    /** Whether this client shows {@code player} pushing the qi orb with both palms, within the LOD distance. */
+    public static boolean isPalmPushing(Player player) {
+        Entry entry = POSES.get(player.getId());
+        Minecraft mc = Minecraft.getInstance();
+        return entry != null && entry.pose == PlayerPose.PALM_PUSH && mc.player != null
+                && player.distanceToSqr(mc.player) <= maxDistanceSqr();
+    }
+
+    /**
+     * qi_station: both arms straight out along the head, which the locked camera keeps on the orb, so the palms
+     * follow it. A slow press in and out while pushing; a swing (the burst's PUNCH_FINISH) becomes a two-palm thrust.
+     * {@code drawing}: the palms drawn back toward the chest, trembling a little, as if hauling the orb in.
+     * Runs at the end of setupAnim, after vanilla posed and swung the arms.
+     */
+    public static void posePalmPush(HumanoidModel<?> model, float ageInTicks, boolean drawing) {
+        float xRot = model.head.xRot - Mth.HALF_PI + (drawing ? PALM_DRAW_DROP : 0.0F);
+        float yRot = model.head.yRot;
+        float forward = drawing
+                ? -PALM_DRAW + 0.15F * Mth.sin(ageInTicks * 1.3F)
+                : PALM_PRESS * (1.0F + Mth.sin(ageInTicks * 0.15F));
+        forward += PALM_THRUST * Mth.sin(model.attackTime * Mth.PI);
+        model.rightArm.xRot = xRot;
+        model.rightArm.yRot = yRot - PALM_INWARD;
+        model.rightArm.zRot = 0.0F;
+        model.rightArm.z -= forward;
+        model.leftArm.xRot = xRot;
+        model.leftArm.yRot = yRot + PALM_INWARD;
+        model.leftArm.zRot = 0.0F;
+        model.leftArm.z -= forward;
+    }
+
+    /** The pose's data byte, 0 when the player has no pose. */
+    public static int data(Player player) {
+        Entry entry = POSES.get(player.getId());
+        return entry != null ? entry.data : 0;
     }
 
     /**
@@ -71,7 +155,10 @@ public final class ClientPoses {
         if (entry != null) {
             entry.lastAction = ClientSession.clock();
         }
-        PunchEffects.spawn(player, action, key);
+        if (entry == null || entry.pose != PlayerPose.PALM_PUSH) {
+            // qi_station draws its own burst (QiEffects, D60), not the dummy's sparks
+            PunchEffects.spawn(player, action, key);
+        }
         if (playEpicFight(player, action)) {
             return;
         }
@@ -97,6 +184,7 @@ public final class ClientPoses {
 
     public static void clear() {
         POSES.clear();
+        YokeVisuals.clear();
     }
 
     public static void tick(Minecraft mc) {

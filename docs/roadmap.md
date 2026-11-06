@@ -14,7 +14,7 @@
 - [ ] **โมเดล:** block model JSON ธรรมดาพอไหม หรือต้องการ GeckoLib
 - [ ] **ใครทำ texture, model, ท่าทางผู้เล่น และเสียง**
 - [ ] **Epic Fight:** ผู้เล่นอยู่ใน battle mode บ่อยไหม (ดู [`integrations/playeranim.md`](integrations/playeranim.md))
-- [ ] **ภาษาในเกม:** ใช้ `th_th` เป็นหลักและมี `en_us` สำรอง?
+- [x] **ภาษาในเกม:** คำอธิบายเป็นไทยเสมอ ชื่อบล็อกและปุ่มตามภาษาเกม (2026-11-03, D69)
 
 ## P0 — ตั้งโปรเจกต์
 - [x] ก๊อป gradle wrapper, `build.gradle`, `settings.gradle` และ `gradle.properties` จาก `../bhfx` (ตัดส่วน shader, glslang, publish และ `copyToBHSpells` ออก) (2026-10-19)
@@ -78,6 +78,7 @@
 - [x] `thunder_grass` (ค้าง `LMB` + `SPACE`, gauge `pull`, `strikeVisual`) (2026-10-19)
 - [x] `StationBlock` (ไม่ต้องรีเซ็ต, ทุบไม่พังแต่ฟาดกลับ) — บล็อกสองชั้นเลื่อนไป P6 พร้อมโมเดลจริง, NBT `BruteForce` ไป P5 (D36) (2026-10-19)
 - [x] `wooden_dummy` (`SEQUENCE`, channel `WORLD_ARROW`, ลูกศรกลับทิศ, ท่าปิดชุด `SPACE`) (2026-10-19)
+- [x] `wooden_dummy` รอบสอง: สูง 2 ช่อง + หันตามคนวาง, แขน 4 ด้าน, particle ขึ้นด่าน, เสียงหมัดถึงคนรอบข้าง, บังคับโหมดต่อสู้ Epic Fight, กล้อง `FREE_LOOK` (2026-11-02, D66) ยังไม่ได้ทดสอบในเกม
 
 ## P4 — ฟังลม + ดับเทียน
 - [ ] `wind_listener` (channel `SPATIAL_AUDIO`, overlay มืด, ผ้าปิดตาผ่าน `PoseLayer`, ลมจากด้านบนใน phase 3)
@@ -107,9 +108,14 @@
 
 ## P8 — รอบสอง
 - [ ] `fire_root`
-- [ ] `water_yoke` หาบน้ำแบบของแบก เดินไปไหนก็ได้ (📝 ร่างสเปก 2026-10-22, D46, D48) ต้องเพิ่มบล็อกแบบ Carry และ `movement=FREE` ใน core ดู [`design/minigames/water_yoke.md`](design/minigames/water_yoke.md)
+- [ ] `water_yoke` หาบน้ำแบบของแบก เดินไปไหนก็ได้ (📝 ร่างสเปก 2026-10-22, แก้ 2026-10-29, D46, D48–D57) 🔨 session รุ่นแรกเขียนแล้ว 2026-10-29 (บล็อก Carry, `freeMovement`, แถบสมดุลค้างปุ่มเลี้ยงเข็ม D55, คานเอียงตามเข็ม, เข็มตอบสนองทันทีไม่รอ ping D57, blacklist Carry On, ยากขึ้น + ติด slow D70, กัน Carry On ด้วยโค้ด D72) build ผ่าน **ยังไม่ได้ลองในเกม** ดู testing.md ที่ยังไม่ทำ: ช่วงวาง 1 วินาที, scoreboard `bhg_water_carried`, โมเดลและ texture จริง ดู [`design/minigames/water_yoke.md`](design/minigames/water_yoke.md)
+- [ ] `qi_station` แท่นประชันปราณแบบ PvP (D58, D65 สีคลื่นของเราเอง) 🔨 เขียนโค้ดแล้ว 2026-11-02 (core: `winBy`, `facesOff`, `FLAG_TUG`; เกม: ดัน/ส่งคลื่น/สะท้อน, ลูกแก้วคลั่งหลัง 60 วินาที; ลูกแก้ว placeholder บน client, ท่า `PALM_PUSH` แบบ vanilla) build ผ่าน, unit test 15 ข้อผ่าน ปรับให้ยากขึ้นแล้ว (คลื่นหลอก, กันต้องปล่อยมือ, D59) คนดูเห็นลูกแก้วและมี particle placeholder ของการดวล (D60) ค้าง `Shift` ดึงกลับ/ย้อนแรงดัน (D76, 2026-11-05, unit test 22 ข้อผ่าน) **ยังไม่ได้ลองในเกม** ที่ยังไม่ทำ: โมเดลจริง, particle/เสียงของ bhfx ดู [`design/minigames/qi_station.md`](design/minigames/qi_station.md)
 - [ ] ออกแบบ `tangled_root` ใหม่ให้ไม่ซ้ำกับหุ่นไม้ แล้วทำ
 - [x] ~~`twin_grass`~~ ย้ายไปทำใน P2a เป็นเกมทดสอบ session หลายคน (D35)
+
+## นอก phase
+
+- [ ] หุ่นฝึก `sparring_dummy`: mob ตีเป้าหมายด้วยท่า Epic Fight ที่ตั้งด้วย `/bhgame sparring` (D73) 🔨 เขียนโค้ดแล้ว 2026-11-05 build ผ่าน **ยังไม่ได้ลองในเกม** ไม้สั่งหุ่นตั้งค่าจากตัวหุ่น (D74, 0.1.25) หน้าตั้งค่าอังกฤษ 3 แท็บ + ความเร็วท่า + pattern ตามเงื่อนไข + stats/อุปกรณ์ (D75, 0.1.26) optimize + วัดภาระเซิร์ฟ (0.1.27) หยุดตีเมื่อเป้าหมายเลือดน้อย + คำสั่งตาม event (D79, 0.1.32) ตั้งชื่อหุ่น (0.2.1) ที่ยังไม่ทำ: texture จริงของหุ่นและไม้ (ตอนนี้ placeholder จากสคริปต์) ดู [`design/sparring_dummy.md`](design/sparring_dummy.md)
 
 ## Backlog
 ดู [`design/minigames/README.md`](design/minigames/README.md) หัวข้อ Backlog

@@ -4,12 +4,14 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.deizyn.bhgame.core.block.TrainingBlock;
 import net.deizyn.bhgame.core.config.BhGameConfig;
 import net.deizyn.bhgame.core.session.Participant;
 import net.deizyn.bhgame.core.session.SessionManager;
 import net.deizyn.bhgame.core.session.StressTest;
 import net.deizyn.bhgame.core.session.TrainingSession;
+import net.deizyn.bhgame.game.carry.water_yoke.YokePrototype;
 import net.deizyn.bhgame.network.BhGameNetwork;
 import net.deizyn.bhgame.registry.Minigames;
 import net.minecraft.commands.CommandSourceStack;
@@ -30,6 +32,11 @@ public final class BhGameCommand {
         dispatcher.register(Commands.literal("bhgame")
                 .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("debug").executes(BhGameCommand::debug))
+                .then(SparringCommand.build())
+                .then(Commands.literal("yoke").executes(BhGameCommand::yokeToggle)
+                        .then(Commands.argument("left", IntegerArgumentType.integer(0, 3))
+                                .then(Commands.argument("right", IntegerArgumentType.integer(0, 3))
+                                        .executes(BhGameCommand::yokeWater))))
                 .then(Commands.literal("stress")
                         .then(Commands.literal("stop").executes(BhGameCommand::stressStop))
                         .then(Commands.argument("count", IntegerArgumentType.integer(1, MAX_STRESS))
@@ -76,6 +83,33 @@ public final class BhGameCommand {
             source.sendSuccess(() -> Component.literal("  " + StressTest.statsLine()), false);
         }
         return sessions.size();
+    }
+
+    /** water_yoke prototype (D51): yoke on your own shoulders, no session. */
+    private static int yokeToggle(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        if (SessionManager.isInSession(player.getUUID())) {
+            context.getSource().sendFailure(Component.literal("[bhgame] leave the session first"));
+            return 0;
+        }
+        boolean carrying = YokePrototype.toggle(player);
+        context.getSource().sendSuccess(() -> Component.literal(carrying
+                ? "[bhgame] yoke on (prototype); set water with /bhgame yoke <left> <right>, remove with /bhgame yoke"
+                : "[bhgame] yoke off"), false);
+        return 1;
+    }
+
+    private static int yokeWater(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        if (SessionManager.isInSession(player.getUUID())) {
+            context.getSource().sendFailure(Component.literal("[bhgame] leave the session first"));
+            return 0;
+        }
+        int left = IntegerArgumentType.getInteger(context, "left");
+        int right = IntegerArgumentType.getInteger(context, "right");
+        YokePrototype.setWater(player, left, right);
+        context.getSource().sendSuccess(() -> Component.literal("[bhgame] yoke water " + left + " / " + right), false);
+        return 1;
     }
 
     private static int stress(CommandContext<CommandSourceStack> context, String gameId) {

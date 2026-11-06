@@ -10,17 +10,22 @@ import net.deizyn.bhgame.core.input.InputKey;
 import net.deizyn.bhgame.core.outcome.Penalty;
 import net.deizyn.bhgame.core.pose.PlayerAction;
 import net.deizyn.bhgame.core.pattern.Pattern;
+import net.deizyn.bhgame.core.pattern.Motion;
 import net.deizyn.bhgame.core.pattern.PatternContext;
 import net.deizyn.bhgame.network.BhGameNetwork;
 import net.deizyn.bhgame.network.S2CCue;
+import net.deizyn.bhgame.network.S2CNearbyState;
 import net.deizyn.bhgame.network.S2CGaugeSync;
 import net.deizyn.bhgame.network.S2CPlayerAction;
+import net.deizyn.bhgame.network.S2CPlayerPose;
 import net.deizyn.bhgame.network.S2CSessionBanner;
 import net.deizyn.bhgame.network.S2CSessionUpdate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -72,6 +77,24 @@ public final class TrainingSession implements PatternContext {
     private int nextCueId;
     /** Stress bots only: next tick a bot presses something. */
     private long botNextPress;
+    /** Public state (D60): last tick it went out, and whether it changed since. */
+    private long nearbySentAt = Long.MIN_VALUE / 2;
+    private boolean nearbyDirty;
+    /** Face-off games (D58, D62): the side the host took when they clicked; everyone else stands opposite. */
+    @Nullable
+    private Direction hostSide;
+    /** Set for carried games (D48): the block is out of the world while this session runs. */
+    @Nullable
+    private CarryState carry;
+
+    @Nullable
+    Direction hostSide() {
+        return hostSide;
+    }
+
+    void setHostSide(@Nullable Direction side) {
+        hostSide = side;
+    }
 
     TrainingSession(ResourceKey<Level> dimension, BlockPos pos, TrainingBlock game, int difficulty, int maxHp,
                     int maxMistakes, long startTick, boolean simulated) {
@@ -150,6 +173,55 @@ public final class TrainingSession implements PatternContext {
 
     public boolean simulated() {
         return simulated;
+    }
+
+    @Nullable
+    public CarryState carry() {
+        return carry;
+    }
+
+    void setCarry(CarryState carry) {
+        this.carry = carry;
+    }
+
+    @Override
+    public Motion motion() {
+        return carry != null ? carry.motion : Motion.STILL;
+    }
+
+    @Override
+    public int poseData() {
+        return carry != null ? carry.data : 0;
+    }
+
+    @Override
+    public void setCarrySlow(float share) {
+        if (carry == null || carry.slow == share) {
+            return;
+        }
+        carry.slow = share;
+        ServerPlayer player = player(participants.get(0));
+        if (player != null) {
+            CarryState.applySlow(player, share);
+        }
+    }
+
+    @Override
+    public void setPoseData(int data) {
+        if (carry == null || carry.data == data) {
+            return;
+        }
+        carry.data = data;
+        for (Participant participant : participants) {
+            if (participant.simulated()) {
+                BhGameNetwork.countSimulated();
+                continue;
+            }
+            ServerPlayer player = player(participant);
+            if (player != null) {
+                BhGameNetwork.sendToTrackingAndSelf(player, new S2CPlayerPose(player.getId(), game.pose(), data));
+            }
+        }
     }
 
     @Override
@@ -257,6 +329,16 @@ public final class TrainingSession implements PatternContext {
     }
 
     @Override
+    public float inputLagTicks(Participant participant) {
+        ServerPlayer player = player(participant);
+        if (player == null) {
+            return 0.0F;
+        }
+        // latency is the round trip; a key took about half of it to get here
+        return Math.min(Math.max(player.latency, 0), BhGameConfig.maxPingGraceMs) / 100.0F;
+    }
+
+    @Override
     public int maxGraceTicks() {
         int grace = 0;
         for (Participant participant : participants) {
@@ -317,6 +399,8 @@ public final class TrainingSession implements PatternContext {
         ServerPlayer player = player(who);
         if (player != null) {
             BhGameNetwork.sendToTracking(player, new S2CPlayerAction(player.getId(), action, key));
+            // a vanilla sound packet, so everyone in earshot hears it, not only the players tracking us (D66)
+            game.playActionSound(player.serverLevel(), player, action);
         }
     }
 
@@ -358,6 +442,11 @@ public final class TrainingSession implements PatternContext {
     }
 
     @Override
+    public void winBy(Participant winner) {
+        SessionManager.finish(this, Outcome.SUCCESS, null, null, winner.id());
+    }
+
+    @Override
     public void setFailPenalty(Penalty penalty) {
         failPenalty = penalty;
     }
@@ -376,6 +465,68 @@ public final class TrainingSession implements PatternContext {
         return gauge;
     }
 
+    /** A public state change goes out at most this often (D60); one-shot events are not held back. */
+    private static final int NEARBY_MIN_GAP_TICKS = 4;
+
+    @Override
+    public void showNearby(int event, int role, int data) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            sendNearby(server.getTickCount(), event, role, data);
+        }
+    }
+
+    /** A held key went up or down: bystanders of a game with a public gauge see who is pushing (D60). */
+    void markNearbyDirty() {
+        if (publicGauge() != null) {
+            nearbyDirty = true;
+        }
+    }
+
+    /** The public state as a packet for a client that starts tracking a participant; null without a public gauge. */
+    @Nullable
+    S2CNearbyState nearbySnapshot(long now) {
+        return publicGauge() == null ? null : nearbyState(now, S2CNearbyState.SYNC, 0, 0);
+    }
+
+    @Nullable
+    private Gauge publicGauge() {
+        for (Gauge gauge : gauges) {
+            if (gauge != null && (gauge.flags() & Gauge.FLAG_PUBLIC) != 0) {
+                return gauge;
+            }
+        }
+        return null;
+    }
+
+    private S2CNearbyState nearbyState(long now, int event, int role, int data) {
+        int[] entityIds = new int[participants.size()];
+        int[] heldKeys = new int[participants.size()];
+        for (int i = 0; i < entityIds.length; i++) {
+            Participant participant = participants.get(i);
+            ServerPlayer player = player(participant);
+            entityIds[i] = player != null ? player.getId() : S2CNearbyState.NO_ENTITY;
+            heldKeys[i] = participant.heldKeys();
+        }
+        Gauge gauge = publicGauge();
+        return new S2CNearbyState(pos, event, role, data, entityIds, heldKeys,
+                gauge != null ? gauge.value(now) : 0.0F, gauge != null ? gauge.ratePerTick() : 0.0F);
+    }
+
+    private void sendNearby(long now, int event, int role, int data) {
+        nearbySentAt = now;
+        nearbyDirty = false;
+        if (simulated) {
+            BhGameNetwork.countSimulated();
+            return;
+        }
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        ServerLevel level = server != null ? server.getLevel(dimension) : null;
+        if (level != null && level.isLoaded(pos)) {
+            BhGameNetwork.sendNearBlock(level, pos, nearbyState(now, event, role, data));
+        }
+    }
+
     /** Sends changed gauges and schedules the next resync of moving ones. */
     void flushGauges(long now) {
         for (Gauge gauge : gauges) {
@@ -383,11 +534,22 @@ public final class TrainingSession implements PatternContext {
                 continue;
             }
             if (gauge.needsSync(now, BhGameConfig.gaugeResyncTicks)) {
-                sendToAll(new S2CGaugeSync(gauge.index(), gauge.flags(), gauge.value(now), gauge.ratePerTick()));
+                if ((gauge.flags() & Gauge.FLAG_PUBLIC) != 0) {
+                    nearbyDirty = true;
+                }
+                sendToAll(new S2CGaugeSync(gauge.index(), gauge.flags(), gauge.value(now), gauge.baseRate(),
+                        gauge.keyRate()));
                 gauge.markSynced(now);
             }
             if (gauge.ratePerTick() != 0.0F) {
                 scheduleAt(now + BhGameConfig.gaugeResyncTicks);
+            }
+        }
+        if (nearbyDirty) {
+            if (now >= nearbySentAt + NEARBY_MIN_GAP_TICKS) {
+                sendNearby(now, S2CNearbyState.SYNC, 0, 0);
+            } else {
+                scheduleAt(nearbySentAt + NEARBY_MIN_GAP_TICKS);
             }
         }
     }

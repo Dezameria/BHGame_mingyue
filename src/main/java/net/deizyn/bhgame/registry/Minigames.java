@@ -1,16 +1,20 @@
 package net.deizyn.bhgame.registry;
 
+import net.deizyn.bhgame.core.block.CarryBlock;
 import net.deizyn.bhgame.core.block.HerbBlock;
 import net.deizyn.bhgame.core.block.StationBlock;
 import net.deizyn.bhgame.core.block.TrainingBlock;
-import net.deizyn.bhgame.game.polarity_grass.PolarityGrassBlock;
-import net.deizyn.bhgame.game.pulse_grass.PulseGrassBlock;
-import net.deizyn.bhgame.game.thunder_grass.ThunderGrassBlock;
-import net.deizyn.bhgame.game.twin_grass.TwinGrassBlock;
-import net.deizyn.bhgame.game.wooden_dummy.WoodenDummyBlock;
+import net.deizyn.bhgame.game.herb.polarity_grass.PolarityGrassBlock;
+import net.deizyn.bhgame.game.herb.pulse_grass.PulseGrassBlock;
+import net.deizyn.bhgame.game.station.qi_station.QiStationBlock;
+import net.deizyn.bhgame.game.herb.thunder_grass.ThunderGrassBlock;
+import net.deizyn.bhgame.game.herb.twin_grass.TwinGrassBlock;
+import net.deizyn.bhgame.game.carry.water_yoke.WaterYokeBlock;
+import net.deizyn.bhgame.game.station.wooden_dummy.WoodenDummyBlock;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
@@ -35,6 +39,10 @@ public final class Minigames {
             register("thunder_grass", () -> new ThunderGrassBlock(HerbBlock.herbProperties()));
     public static final RegistryObject<WoodenDummyBlock> WOODEN_DUMMY =
             register("wooden_dummy", () -> new WoodenDummyBlock(StationBlock.stationProperties()));
+    public static final RegistryObject<WaterYokeBlock> WATER_YOKE =
+            register("water_yoke", () -> new WaterYokeBlock(CarryBlock.carryProperties()));
+    public static final RegistryObject<QiStationBlock> QI_STATION =
+            register("qi_station", () -> new QiStationBlock(StationBlock.stationProperties().sound(SoundType.STONE)));
 
     public static <B extends TrainingBlock> RegistryObject<B> register(String id, Supplier<B> factory) {
         RegistryObject<B> block = ModBlocks.BLOCKS.register(id, factory);

@@ -24,6 +24,8 @@ public final class FakePatternContext implements PatternContext {
     public final List<String> log = new ArrayList<>();
     public final List<CueData> cues = new ArrayList<>();
     public final List<String> banners = new ArrayList<>();
+    /** showNearby calls as "event rRole data". */
+    public final List<String> nearby = new ArrayList<>();
     public final List<PlayerAction> actions = new ArrayList<>();
     public final Map<Integer, Gauge> gauges = new HashMap<>();
     public final RandomSource random = RandomSource.create(1);
@@ -68,8 +70,10 @@ public final class FakePatternContext implements PatternContext {
     @Override public void miss(Participant who, int cueId, Penalty penalty) { miss(who, cueId); }
     @Override public void win() { log.add("win"); finished = true; }
     @Override public void fail() { log.add("fail"); finished = true; }
+    @Override public void winBy(Participant winner) { log.add("win r" + winner.role()); finished = true; }
     @Override public void action(Participant who, PlayerAction action, InputKey key) { actions.add(action); }
     @Override public void banner(String translationKey, int value) { banners.add(translationKey + " " + value); }
+    @Override public void showNearby(int event, int role, int data) { nearby.add(event + " r" + role + " " + data); }
     @Override public void setOutcomeMessage(String translationKey, int value) { }
     @Override public void recordBest(String objective, int value) { best = objective + "=" + value; }
     @Override public void setFailPenalty(Penalty penalty) { }

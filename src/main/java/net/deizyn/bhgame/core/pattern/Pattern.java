@@ -14,4 +14,8 @@ public interface Pattern {
 
     /** A key edge that passed the profile filter, rate limit and distance check. */
     void onInput(PatternContext ctx, Participant who, InputKey key, boolean press, long now);
+
+    /** Something the carrier's body did, for carried games (D48, D49). Sent at once, between ticks. */
+    default void onCarryEvent(PatternContext ctx, CarryEvent event, long now) {
+    }
 }

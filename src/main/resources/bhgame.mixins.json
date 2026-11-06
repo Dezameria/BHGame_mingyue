@@ -6,7 +6,13 @@
   "refmap": "bhgame.refmap.json",
   "plugin": "net.deizyn.bhgame.mixin.BhGameMixinPlugin",
   "mixins": [
-    "epicfight.ActionAnimationMixin"
+    "epicfight.ActionAnimationMixin",
+    "epicfight.AnimationPlayerMixin"
+  ],
+  "client": [
+    "client.CameraMixin",
+    "client.EntityTurnMixin",
+    "client.HumanoidModelMixin"
   ],
   "injectors": {
     "defaultRequire": 0

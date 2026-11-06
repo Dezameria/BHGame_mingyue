@@ -1,5 +1,124 @@
 {
   "variants": {
-    "": { "model": "bhgame:block/wooden_dummy" }
+    "half=lower,rotation=0": {
+      "model": "bhgame:block/wooden_dummy_r0"
+    },
+    "half=upper,rotation=0": {
+      "model": "bhgame:block/wooden_dummy_top_r0"
+    },
+    "half=lower,rotation=1": {
+      "model": "bhgame:block/wooden_dummy_r1"
+    },
+    "half=upper,rotation=1": {
+      "model": "bhgame:block/wooden_dummy_top_r1"
+    },
+    "half=lower,rotation=2": {
+      "model": "bhgame:block/wooden_dummy_r2"
+    },
+    "half=upper,rotation=2": {
+      "model": "bhgame:block/wooden_dummy_top_r2"
+    },
+    "half=lower,rotation=3": {
+      "model": "bhgame:block/wooden_dummy_r3"
+    },
+    "half=upper,rotation=3": {
+      "model": "bhgame:block/wooden_dummy_top_r3"
+    },
+    "half=lower,rotation=4": {
+      "model": "bhgame:block/wooden_dummy_r0",
+      "y": 90
+    },
+    "half=upper,rotation=4": {
+      "model": "bhgame:block/wooden_dummy_top_r0",
+      "y": 90
+    },
+    "half=lower,rotation=5": {
+      "model": "bhgame:block/wooden_dummy_r1",
+      "y": 90
+    },
+    "half=upper,rotation=5": {
+      "model": "bhgame:block/wooden_dummy_top_r1",
+      "y": 90
+    },
+    "half=lower,rotation=6": {
+      "model": "bhgame:block/wooden_dummy_r2",
+      "y": 90
+    },
+    "half=upper,rotation=6": {
+      "model": "bhgame:block/wooden_dummy_top_r2",
+      "y": 90
+    },
+    "half=lower,rotation=7": {
+      "model": "bhgame:block/wooden_dummy_r3",
+      "y": 90
+    },
+    "half=upper,rotation=7": {
+      "model": "bhgame:block/wooden_dummy_top_r3",
+      "y": 90
+    },
+    "half=lower,rotation=8": {
+      "model": "bhgame:block/wooden_dummy_r0",
+      "y": 180
+    },
+    "half=upper,rotation=8": {
+      "model": "bhgame:block/wooden_dummy_top_r0",
+      "y": 180
+    },
+    "half=lower,rotation=9": {
+      "model": "bhgame:block/wooden_dummy_r1",
+      "y": 180
+    },
+    "half=upper,rotation=9": {
+      "model": "bhgame:block/wooden_dummy_top_r1",
+      "y": 180
+    },
+    "half=lower,rotation=10": {
+      "model": "bhgame:block/wooden_dummy_r2",
+      "y": 180
+    },
+    "half=upper,rotation=10": {
+      "model": "bhgame:block/wooden_dummy_top_r2",
+      "y": 180
+    },
+    "half=lower,rotation=11": {
+      "model": "bhgame:block/wooden_dummy_r3",
+      "y": 180
+    },
+    "half=upper,rotation=11": {
+      "model": "bhgame:block/wooden_dummy_top_r3",
+      "y": 180
+    },
+    "half=lower,rotation=12": {
+      "model": "bhgame:block/wooden_dummy_r0",
+      "y": 270
+    },
+    "half=upper,rotation=12": {
+      "model": "bhgame:block/wooden_dummy_top_r0",
+      "y": 270
+    },
+    "half=lower,rotation=13": {
+      "model": "bhgame:block/wooden_dummy_r1",
+      "y": 270
+    },
+    "half=upper,rotation=13": {
+      "model": "bhgame:block/wooden_dummy_top_r1",
+      "y": 270
+    },
+    "half=lower,rotation=14": {
+      "model": "bhgame:block/wooden_dummy_r2",
+      "y": 270
+    },
+    "half=upper,rotation=14": {
+      "model": "bhgame:block/wooden_dummy_top_r2",
+      "y": 270
+    },
+    "half=lower,rotation=15": {
+      "model": "bhgame:block/wooden_dummy_r3",
+      "y": 270
+    },
+    "half=upper,rotation=15": {
+      "model": "bhgame:block/wooden_dummy_top_r3",
+      "y": 270
+    }
   }
 }

@@ -29,7 +29,8 @@ bhgame_mingyue/
    │  ├─ registry/                   ลงทะเบียนของ Forge (DeferredRegister)
    │  │  ├─ ModBlocks.java
    │  │  ├─ ModBlockEntities.java
-   │  │  ├─ ModItems.java            BlockItem ของทุกเกม
+   │  │  ├─ ModItems.java            BlockItem ของทุกเกม + ไข่หุ่นฝึก + ไม้สั่งหุ่น (D74)
+   │  │  ├─ ModEntities.java         mob (หุ่นฝึก D73)
    │  │  ├─ ModSounds.java
    │  │  ├─ ModCreativeTabs.java
    │  │  └─ Minigames.java           ★ ที่เดียวที่ลงทะเบียนมินิเกม (ดูหัวข้อ "MinigameType")
@@ -82,20 +83,26 @@ bhgame_mingyue/
    │  │  └─ config/
    │  │     └─ BhGameConfig.java     ForgeConfigSpec server + client, คัดลอกค่าลง static field ตอนโหลด (hot path ไม่แตะ spec)
    │  │
-   │  ├─ game/                       ★ หนึ่งโฟลเดอร์ต่อหนึ่งเกม
-   │  │  ├─ pulse_grass/
-   │  │  │  ├─ PulseGrassBlock.java     extends HerbBlock: ค่าเริ่มต้น, penalty, input profile
-   │  │  │  └─ PulseGrassPattern.java   implements Pattern ใช้ BeatTrack
-   │  │  ├─ twin_grass/                 2 คน: requiredPlayers() = 2, inputProfile(role)
-   │  │  ├─ polarity_grass/ ...
-   │  │  ├─ thunder_grass/ ...
-   │  │  ├─ wooden_dummy/ ...
-   │  │  ├─ wind_listener/ ...
-   │  │  ├─ candle_altar/
-   │  │  │  ├─ CandleAltarBlock.java
-   │  │  │  ├─ CandleAltarPattern.java
-   │  │  │  └─ CandleScanner.java       implements TargetScanner: หาเทียน vanilla ที่ยังไม่ติดไฟ + ตรวจว่ามองเห็น
-   │  │  └─ <game_id>/ ...
+   │  ├─ game/                       ★ แบ่งตามหมวด (D63) แล้วหนึ่งโฟลเดอร์ต่อหนึ่งเกม
+   │  │  ├─ herb/                      หญ้า (extends HerbBlock)
+   │  │  │  ├─ pulse_grass/
+   │  │  │  │  ├─ PulseGrassBlock.java     extends HerbBlock: ค่าเริ่มต้น, penalty, input profile
+   │  │  │  │  └─ PulseGrassPattern.java   implements Pattern ใช้ BeatTrack
+   │  │  │  ├─ twin_grass/                 2 คน: requiredPlayers() = 2, inputProfile(role)
+   │  │  │  ├─ polarity_grass/ ...
+   │  │  │  └─ thunder_grass/ ...
+   │  │  ├─ station/                   แท่นฝึก (extends StationBlock)
+   │  │  │  ├─ wooden_dummy/ ...
+   │  │  │  ├─ qi_station/ ...          PvP 2 คน (D58)
+   │  │  │  ├─ wind_listener/ ...       (ยังไม่ทำ)
+   │  │  │  └─ candle_altar/            (ยังไม่ทำ)
+   │  │  │     ├─ CandleAltarBlock.java
+   │  │  │     ├─ CandleAltarPattern.java
+   │  │  │     └─ CandleScanner.java    implements TargetScanner: หาเทียน vanilla ที่ยังไม่ติดไฟ + ตรวจว่ามองเห็น
+   │  │  ├─ carry/                     ของแบก (extends CarryBlock)
+   │  │  │  └─ water_yoke/ ...
+   │  │  └─ mob/                       mob ที่ไม่ใช่มินิเกม ไม่มี session (D73)
+   │  │     └─ sparring_dummy/         หุ่นฝึก: SparringDummy, SparringAttackGoal, SparringMove, SparringPattern, SparringSettings, SparringStats, SparringCommands, SparringBatonItem ดู design/sparring_dummy.md
    │  │
    │  ├─ network/
    │  │  ├─ BhGameNetwork.java       SimpleChannel + ลงทะเบียน packet
@@ -106,10 +113,12 @@ bhgame_mingyue/
    │  │  ├─ S2CSessionEnd.java       outcome                                              → คนเล่นคนเดียว
    │  │  ├─ S2CPlayerPose.java       player id + PlayerPose (เริ่ม/เปลี่ยน/จบ)             → คนที่ track ผู้เล่น (ไม่รวมตัวเอง)
    │  │  ├─ C2SInput.java            key, PRESS/RELEASE, (ไม่บังคับ) yaw+pitch — มี flag บอกว่ามี payload หรือไม่ ตั้งแต่ P1
-   │  │  └─ C2SAbort.java            ※ กฎการส่ง packet ทั้งหมดอยู่ใน multiplayer-performance.md
+   │  │  ├─ C2SAbort.java            ※ กฎการส่ง packet ทั้งหมดอยู่ใน multiplayer-performance.md
+   │  │  └─ S2COpenSparring / C2SSparringApply  หน้าตั้งค่าหุ่นฝึกของไม้สั่งหุ่น (D74)
    │  │
    │  ├─ client/                     @OnlyIn(Dist.CLIENT) ทั้งหมด
    │  │  ├─ ClientSession.java       สำเนาสถานะ session ฝั่ง client (มีได้ตัวเดียว)
+   │  │  ├─ screen/SparringScreen.java  หน้าตั้งค่าหุ่นฝึก (ไม้สั่งหุ่น D74, อังกฤษ D75, แท็บ Commands D79)
    │  │  ├─ input/
    │  │  │  ├─ InputLock.java        ล็อกตาม InputProfile (เดินเสมอ, กล้องถ้า LOCKED, ตี/ใช้ของ/กระโดด) + พักรับ input ของโลก 10 tick หลังจบ
    │  │  │  ├─ InputCapture.java     แปลง keybind → InputKey → กรองตาม profile (holdKeys, sendIdlePresses) → C2SInput
@@ -135,11 +144,13 @@ bhgame_mingyue/
    │  │  │  ├─ BhfxCompat.java       ที่ game/core เรียก ห้าม import bhfx
    │  │  │  ├─ BhfxLoadedBridge.java ที่เดียวที่เรียก BHFx.*
    │  │  │  └─ client/ ...
+   │  │  ├─ epicfight/               ดู integrations/epicfight.md (EpicFightCompat ห้าม import Epic Fight; bridge, mixin และ SparringDummyPatch import ได้)
    │  │  └─ playeranim/              ดู integrations/playeranim.md
    │  │     ├─ PlayerAnimCompat.java      เช็กว่าโหลดอยู่ไหม ห้าม import playerAnimator
    │  │     └─ PlayerAnimBridge.java      ที่เดียวที่เรียก API ของ playerAnimator
    │  │
    │  └─ command/
+   │     ├─ SparringCommand.java     /bhgame sparring <หุ่น> ... (D73)
    │     └─ BhGameCommand.java       /bhgame list | abort <player> | stats <player> | reset <pos> | debug | stress <n> (dev เท่านั้น)
    │
    └─ resources/
@@ -237,21 +248,21 @@ public static final RegistryObject<PulseGrassBlock> PULSE_GRASS =
 
 | อยากได้ | ทำที่ไหน |
 | :--- | :--- |
-| เกมใหม่ที่ใช้ cue, channel และ input profile ที่มีอยู่ | `game/<id>/` + ลงทะเบียนใน `Minigames` เท่านั้น |
+| เกมใหม่ที่ใช้ cue, channel และ input profile ที่มีอยู่ | `game/<หมวด>/<id>/` + ลงทะเบียนใน `Minigames` เท่านั้น |
 | เกมที่เป้าอยู่ในโลก (แบบดับเทียน) | เขียน `TargetScanner` ของเกมนั้น ใช้ channel `WORLD_TARGET` และ cue `AIM` ที่มีอยู่แล้ว |
 | คำใบ้ภาพแบบใหม่ (เช่น สีใหม่) | เพิ่มใน `CueVisual` + วาดใน `CueVisualRenderer` |
 | gauge แบบใหม่ | ไม่ต้องแก้ core ใช้ `Gauge` ตั้งชื่อและสีเอง |
 | ท่าทางผู้เล่นแบบใหม่ | เพิ่มใน `PlayerPose` + ไฟล์ใน `player_animation/` |
 | หญ้าผสมคุณสมบัติ | (P8) `CompositePattern` ที่รวม pattern เดิม เช่น gauge ของ thunder + สีของ polarity |
 | cue ชนิดใหม่ หรือ channel ใหม่ | เพิ่มใน `CueType` / `CueChannel` + กฎตัดสินใน `CueJudge` + renderer ของ channel **ถือว่าเป็นการเปลี่ยน core** ต้องบันทึกใน [`decisions.md`](decisions.md) (`AIM`, `SEQUENCE` และทั้ง 4 channel มีตั้งแต่แรกแล้ว ตาม D24) |
-| หลายผู้เล่นใน session เดียว (co-op, PvP) | **มีแล้ว** (D31): `requiredPlayers()` + `inputProfile(role)` และ cue ที่มี role mask ดูตัวอย่าง `game/twin_grass/` |
+| หลายผู้เล่นใน session เดียว (co-op, PvP) | **มีแล้ว** (D31): `requiredPlayers()` + `inputProfile(role)` และ cue ที่มี role mask ดูตัวอย่าง `game/herb/twin_grass/` และ PvP `game/station/qi_station/` |
 | Combatant (entity ที่ตีได้และตีกลับ) | **ระบบแยก** ใน `combatant/` ไม่ใช้ session engine ดู backlog ใน [`design/minigames/README.md`](design/minigames/README.md) |
 
 ## กฎของโค้ด
 
 - `core/` ห้าม import `game/`, `client/`, `compat/` ส่วนตัวที่โหลดจริง หรือ `net.deizyn.bhfx` / playerAnimator
-- `game/` ห้าม import `client/` ถ้าเกมต้องการภาพเฉพาะ ให้วางใน `client/render/<game_id>/`
+- `game/` ห้าม import `client/` ถ้าเกมต้องการภาพเฉพาะ ให้วางใน `client/render/<หมวด>/<game_id>/` (เช่น `client/render/station/qi_station/`)
 - **ห้ามส่งข้อมูล gameplay (cue, HP, gauge) ให้ใครนอกจากคนเล่น** และห้ามใช้ blockstate แสดง cue (blockstate sync ให้ทุกคนและทำให้ chunk rebuild)
 - ค่าตัวเลขของเกม (กรอบเวลา, จังหวะ) อยู่ใน pattern class ของเกมนั้น และต้องตรงกับสเปกใน `docs/design/minigames/<game_id>.md`
 - ทุกกฎใน [`multiplayer-performance.md`](multiplayer-performance.md) ถือเป็นกฎของโค้ดด้วย (ไม่มี packet รายtick, ไม่สร้าง object ใน hot path, session ไม่เก็บ reference ของ player/block entity)
-- ทุกข้อความที่ผู้เล่นเห็นใช้ translation key (`bhgame.<game_id>.*`, `bhgame.hud.*`) มีทั้ง `en_us` และ `th_th`
+- ทุกข้อความที่ผู้เล่นเห็นใช้ translation key (`bhgame.<game_id>.*`, `bhgame.hud.*`) มีทั้ง `en_us` และ `th_th` โดยคำอธิบายใน `en_us` ใช้ข้อความไทยเดียวกับ `th_th` ส่วนชื่อ (`block.*`, `key.*`) ยังเป็นอังกฤษ (D69)

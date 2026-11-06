@@ -8,12 +8,36 @@ package net.deizyn.bhgame.core.gauge;
 public final class Gauge {
     /** The block shows this gauge as its progress (e.g. the herb rising out of the soil). */
     public static final int FLAG_PROGRESS = 1;
+    /**
+     * Drawn as a balance bar with a needle, 0.5 = level (water_yoke, D55). A held LMB moves it toward 0 and RMB
+     * toward 1 at {@link #keyRate()}, which the client applies itself the moment a key changes (D57).
+     */
+    public static final int FLAG_BALANCE = 2;
+    /**
+     * The red part at each end of a balance bar, as a share of the whole bar (water_yoke, D70): the HUD draws it and
+     * the game makes the needle in there harder to hold.
+     */
+    public static final float BALANCE_DANGER = 0.3F;
+    /**
+     * A tug of war between roles 0 and 1 (qi_station, D58): where the orb hangs, 0 = against role 0, 1 = against
+     * role 1, 0.5 = the middle.
+     */
+    public static final int FLAG_TUG = 4;
+    /**
+     * Also shown to everyone near the block, with the participants' held keys, as {@code S2CNearbyState} (D60).
+     * Cosmetic: the qi_station orb that bystanders see.
+     */
+    public static final int FLAG_PUBLIC = 8;
 
     private final int index;
     private final int flags;
     private float value;
     private float ratePerTick;
     private long setTick;
+    /** Speed one held key adds (FLAG_BALANCE), sent so the client can move the needle itself; 0 = no keys. */
+    private float keyRate;
+    /** The part of {@link #ratePerTick} that comes from the keys held now; the client adds its own instead. */
+    private float heldRate;
     long lastSyncTick;
     boolean dirty;
 
@@ -39,20 +63,52 @@ public final class Gauge {
         return ratePerTick;
     }
 
+    /** The rate without the held keys' part: what the client animates before adding its own keys. */
+    public float baseRate() {
+        return ratePerTick - heldRate;
+    }
+
+    public float keyRate() {
+        return keyRate;
+    }
+
+    public float heldRate() {
+        return heldRate;
+    }
+
+    /** A new value and rate with no keys' part in it. */
     public void set(long now, float value, float ratePerTick) {
+        set(now, value, ratePerTick, 0.0F);
+    }
+
+    private void set(long now, float value, float ratePerTick, float heldRate) {
         this.value = clamp(value);
         this.ratePerTick = ratePerTick;
+        this.heldRate = heldRate;
         this.setTick = now;
         this.dirty = true;
     }
 
     /** Keeps the current value and changes only the rate. */
     public void setRate(long now, float ratePerTick) {
-        set(now, value(now), ratePerTick);
+        set(now, value(now), ratePerTick, heldRate);
+    }
+
+    /** Keeps the current value; {@code heldRate} is the part of the new rate that comes from the held keys. */
+    public void setRate(long now, float ratePerTick, float heldRate) {
+        set(now, value(now), ratePerTick, heldRate);
+    }
+
+    /** How fast one held key moves this gauge; 0 when keys do nothing (the client then stops predicting). */
+    public void setKeyRate(float keyRate) {
+        if (keyRate != this.keyRate) {
+            this.keyRate = keyRate;
+            this.dirty = true;
+        }
     }
 
     public void add(long now, float delta) {
-        set(now, value(now) + delta, ratePerTick);
+        set(now, value(now) + delta, ratePerTick, heldRate);
     }
 
     /** First tick at which the value reaches {@code target} at the current rate, or Long.MAX_VALUE if it never does. */

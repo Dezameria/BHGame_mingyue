@@ -21,6 +21,8 @@ public final class BhGameConfig {
     private static final ForgeConfigSpec.IntValue PARTNER_WAIT_TICKS;
     private static final ForgeConfigSpec.IntValue GAUGE_RESYNC_TICKS;
     private static final ForgeConfigSpec.BooleanValue ENABLE_STRESS_COMMAND;
+    private static final ForgeConfigSpec.IntValue SPARRING_BATON_PERMISSION;
+    private static final ForgeConfigSpec.IntValue SPARRING_COMMAND_PERMISSION;
 
     private static final ForgeConfigSpec.BooleanValue SHOW_KEY_HINTS;
     private static final ForgeConfigSpec.IntValue POSE_ANIMATION_DISTANCE;
@@ -34,6 +36,8 @@ public final class BhGameConfig {
     public static int partnerWaitTicks = 600;
     public static int gaugeResyncTicks = 20;
     public static boolean enableStressCommand = false;
+    public static int sparringBatonPermission = 2;
+    public static int sparringCommandPermission = 2;
 
     // client
     public static boolean showKeyHints = true;
@@ -58,6 +62,15 @@ public final class BhGameConfig {
                 .defineInRange("maxConcurrentSessions", 0, 0, 10000);
         PARTNER_WAIT_TICKS = server.comment("How long a multi-player game (twin_grass) waits for the partner.")
                 .defineInRange("partnerWaitTicks", 600, 100, 6000);
+        server.pop();
+        server.push("sparring");
+        SPARRING_BATON_PERMISSION = server.comment("Permission level needed to use the sparring baton (D74). "
+                        + "2 = same as /bhgame sparring, 0 = anyone holding the baton.")
+                .defineInRange("batonPermissionLevel", 2, 0, 4);
+        SPARRING_COMMAND_PERMISSION = server.comment("Permission level needed to set a sparring dummy's event commands "
+                        + "(baton screen or /bhgame sparring ... command). The commands run at level 2, like a command "
+                        + "block, so this is never below 2.")
+                .defineInRange("commandPermissionLevel", 2, 2, 4);
         server.pop();
         server.push("dev");
         ENABLE_STRESS_COMMAND = server.comment("Allow /bhgame stress outside the dev environment. Keep off on a live server.")
@@ -84,6 +97,8 @@ public final class BhGameConfig {
             partnerWaitTicks = PARTNER_WAIT_TICKS.get();
             gaugeResyncTicks = GAUGE_RESYNC_TICKS.get();
             enableStressCommand = ENABLE_STRESS_COMMAND.get();
+            sparringBatonPermission = SPARRING_BATON_PERMISSION.get();
+            sparringCommandPermission = SPARRING_COMMAND_PERMISSION.get();
         } else if (config.getSpec() == CLIENT_SPEC) {
             showKeyHints = SHOW_KEY_HINTS.get();
             poseAnimationDistance = POSE_ANIMATION_DISTANCE.get();

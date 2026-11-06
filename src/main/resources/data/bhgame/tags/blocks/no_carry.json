@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "bhgame:pulse_grass",
+    "bhgame:twin_grass",
+    "bhgame:polarity_grass",
+    "bhgame:thunder_grass",
+    "bhgame:wooden_dummy",
+    "bhgame:water_yoke",
+    "bhgame:qi_station"
+  ]
+}
